@@ -1,0 +1,6 @@
+[package]
+name = "minicaml"
+version = "0.1.0"
+authors = ["Jim Fitzpatrick <fitzpatrick.jim@gmail.com>"]
+
+[dependencies]
