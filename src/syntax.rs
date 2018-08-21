@@ -22,11 +22,11 @@ pub enum Syntax {
     Var(String),
     LetRec(FunDef, Box<Syntax>),
     App(Box<Syntax>, Vec<Box<Syntax>>),
-    // | Tuple of t list
+    Tuple(Vec<Box<Syntax>>),
     LetTuple(Vec<(String, Type)>, Box<Syntax>, Box<Syntax>),
-    // | Array of t * t
+    Array(Box<Syntax>, Box<Syntax>),
     Get(Box<Syntax>, Box<Syntax>),
-    // | Put of t * t * t
+    Put(Box<Syntax>, Box<Syntax>, Box<Syntax>),
 }
 
 #[derive(Debug, PartialEq)]

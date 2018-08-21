@@ -82,56 +82,67 @@ impl<'a> Parser<'a> {
     }
 
     fn expression(&mut self) -> Result<Syntax, String> {
-        match self.peek() {
-            Token::If => {
-                self.next();
-                let exp1 = self.expression()?;
-                self.consume(Token::Then)?;
-                let exp2 = self.expression()?;
-                self.consume(Token::Else)?;
-                let exp3 = self.expression()?;
-                Ok(Syntax::If(Box::new(exp1), Box::new(exp2), Box::new(exp3)))
-            },
-            Token::Let => self.let_expression(),
-            _ => self.equality()
-        }
+        self.let_expression()
     }
 
     fn let_expression(&mut self) -> Result<Syntax, String> {
-        self.next();
         match self.peek() {
-            Token::Ident(ident) => {
+            Token::Let => {
                 self.next();
-                self.consume(Token::Equal)?;
-                let exp1 = self.expression()?;
-                self.consume(Token::In)?;
-                let exp2 = self.expression()?;
-                Ok(Syntax::Let(ident.to_string(), Type::Var(None), Box::new(exp1), Box::new(exp2)))
+                match self.peek() {
+                    Token::Ident(ident) => {
+                        self.next();
+                        self.consume(Token::Equal)?;
+                        let exp1 = self.expression()?;
+                        self.consume(Token::In)?;
+                        let exp2 = self.expression()?;
+                        Ok(Syntax::Let(ident.to_string(), Type::Var(None), Box::new(exp1), Box::new(exp2)))
+                    },
+                    Token::Rec => {
+                        self.next();
+                        let exp1 = self.fundef()?;
+                        self.consume(Token::In)?;
+                        let exp2 = self.expression()?;
+                        Ok(Syntax::LetRec(exp1, Box::new(exp2)))
+                    },
+                    Token::LParen => {
+                        self.next();
+                        let exp1 = self.pat()?;
+                        self.consume(Token::RParen)?;
+                        self.consume(Token::Equal)?;
+                        let exp2 = self.expression()?;
+                        self.consume(Token::In)?;
+                        let exp3 = self.expression()?;
+                        Ok(Syntax::LetTuple(exp1, Box::new(exp2), Box::new(exp3)))
+                    },
+                    _ => Err("Expected an identifier or token 'rec'".to_string())
+                }
             },
-            Token::Rec => {
-                self.next();
-                let exp1 = self.fundef()?;
-                self.consume(Token::In)?;
-                let exp2 = self.expression()?;
-                Ok(Syntax::LetRec(exp1, Box::new(exp2)))
-            },
-            Token::LParen => {
-                self.next();
-                // pat
-                self.consume(Token::RParen)?;
-                self.consume(Token::Equal)?;
-                let exp2 = self.expression()?;
-                self.consume(Token::In)?;
-                let exp3 = self.expression()?;
-                Ok(Syntax::LetTuple(Box::new(exp1), Box::new(exp2), Box::new(exp3)))
-            },
-            _ => Err("Parse error grape".to_string())
+            _ => self.semicolon()
         }
     }
 
-    fn pat(&mut self) -> Result<Vec(String, Type), String> {
-        let result = Vec::new();
-
+    fn pat(&mut self) -> Result<Vec<(String, Type)>, String> {
+        let mut result = Vec::new();
+        loop {
+            match self.next() {
+                Token::Ident(ident) => {
+                    result.push((ident.to_string(), Type::Var(None)));
+                },
+                _ => {
+                    return Err("Expected an identifier".to_string())
+                }
+            }
+            match self.peek() {
+                Token::Comma => {
+                    self.next();
+                },
+                _ => {
+                    break;
+                }
+            }
+        }
+        Ok(result)
     }
 
     fn fundef(&mut self) -> Result<FunDef, String> {
@@ -170,6 +181,53 @@ impl<'a> Parser<'a> {
             Ok(args)
         } else {
             Err("Expected at least one identifier for let rec".to_string())
+        }
+    }
+
+    fn semicolon(&mut self) -> Result<Syntax, String> {
+        self.if_expression()
+    }
+
+    fn if_expression(&mut self) -> Result<Syntax, String> {
+        match self.peek() {
+            Token::If => {
+                self.next();
+                let exp1 = self.expression()?;
+                self.consume(Token::Then)?;
+                let exp2 = self.expression()?;
+                self.consume(Token::Else)?;
+                let exp3 = self.expression()?;
+                Ok(Syntax::If(Box::new(exp1), Box::new(exp2), Box::new(exp3)))
+            },
+            _ => self.comma()
+        }
+    }
+
+    fn comma(&mut self) -> Result<Syntax, String> {
+        let first = self.equality()?;
+        if self.is_done() {
+            return Ok(first)
+        }
+        match self.peek() {
+            Token::Comma => {
+                self.next();
+                let mut items = Vec::new();
+                items.push(Box::new(first));
+                while !self.is_done() {
+                    let next = self.equality()?;
+                    items.push(Box::new(next));
+                    match self.peek() {
+                        Token::Comma => {
+                            self.next();
+                        },
+                        _ => {
+                            break;
+                        }
+                    }
+                }
+                Ok(Syntax::Tuple(items))
+            },
+            _ => Ok(first)
         }
     }
 
@@ -360,6 +418,12 @@ impl<'a> Parser<'a> {
                     }
                 }
             },
+            Token::ArrayCreate => {
+                self.next();
+                let exp1 = self.primary()?;
+                let exp2 = self.primary()?;
+                Ok(Syntax::Array(Box::new(exp1), Box::new(exp2)))
+            },
             _ => Err("Parse error apple".to_string())
         };
         if !self.is_done() && *self.peek() == Token::Dot {
@@ -368,7 +432,13 @@ impl<'a> Parser<'a> {
             self.consume(Token::LParen)?;
             let exp2 = self.expression()?;
             self.consume(Token::RParen)?;
-            Ok(Syntax::Get(Box::new(exp1), Box::new(exp2)))
+            if !self.is_done() && *self.peek() == Token::LessMinus {
+                self.next();
+                let exp3 = self.expression()?;
+                Ok(Syntax::Put(Box::new(exp1), Box::new(exp2), Box::new(exp3)))
+            } else {
+                Ok(Syntax::Get(Box::new(exp1), Box::new(exp2)))
+            }
         } else {
             result
         }
