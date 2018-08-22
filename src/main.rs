@@ -4,6 +4,7 @@ pub mod parser;
 pub mod syntax;
 pub mod token;
 pub mod types;
+pub mod typing;
 
 use std::io::{self, BufRead, Write};
 use parser::parse;
