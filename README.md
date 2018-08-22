@@ -10,13 +10,28 @@ currently leaning toward Mach-O only because I develop on a Mac.
 
 ## Todo
 
-*Todo*
+ - [x] Lexical Analysis
+ - [x] Parsing
+ - [ ] Type Inference (In progress)
+ - [ ] K-Normalization
+ - [ ] α-Conversion
+ - [ ] β-Reduction
+ - [ ] Reduction of Nested let
+ - [ ] Inline Expansion
+ - [ ] Constant Folding
+ - [ ] Elimination of Unnecessary Definitions
+ - [ ] Closure Conversion
+ - [ ] Virtual Machine Code Generation
+ - [ ] 13-Bit Immediate Optimization
+ - [ ] Register Allocation
+ - [ ] Assembly Generation
 
 ## How to run
 
 Assuming cargo/rustc are installed, the project can be run via cargo:
 
     $ cargo build
+    $ cargo test
     $ cargo run
 
 Right now, main.rs fires up a very basic REPL that will take MinCaml
