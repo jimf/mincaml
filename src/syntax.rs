@@ -1,3 +1,4 @@
+use id::Id;
 use types::Type;
 
 #[derive(Debug, PartialEq)]
@@ -18,12 +19,12 @@ pub enum Syntax {
     Equal(Box<Syntax>, Box<Syntax>),
     LE(Box<Syntax>, Box<Syntax>),
     If(Box<Syntax>, Box<Syntax>, Box<Syntax>),
-    Let(String, Type, Box<Syntax>, Box<Syntax>),
-    Var(String),
+    Let(Id, Type, Box<Syntax>, Box<Syntax>),
+    Var(Id),
     LetRec(FunDef, Box<Syntax>),
     App(Box<Syntax>, Vec<Box<Syntax>>),
     Tuple(Vec<Box<Syntax>>),
-    LetTuple(Vec<(String, Type)>, Box<Syntax>, Box<Syntax>),
+    LetTuple(Vec<(Id, Type)>, Box<Syntax>, Box<Syntax>),
     Array(Box<Syntax>, Box<Syntax>),
     Get(Box<Syntax>, Box<Syntax>),
     Put(Box<Syntax>, Box<Syntax>, Box<Syntax>),
@@ -31,7 +32,7 @@ pub enum Syntax {
 
 #[derive(Debug, PartialEq)]
 pub struct FunDef {
-    pub name: (String, Type),
-    pub args: Vec<(String, Type)>,
+    pub name: (Id, Type),
+    pub args: Vec<(Id, Type)>,
     pub body: Box<Syntax>,
 }

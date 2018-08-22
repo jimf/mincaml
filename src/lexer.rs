@@ -275,3 +275,55 @@ impl<'a> Lexer<'a> {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn should_tokenize_valid_inputs() {
+        let cases = [
+            ("".to_string(), Ok(vec![])),
+            ("(* comment *)".to_string(), Ok(vec![])),
+            ("my_var123".to_string(), Ok(vec![Token::Ident("my_var123".to_string())])),
+            ("Array.make".to_string(), Ok(vec![Token::ArrayCreate])),
+            ("Array.create".to_string(), Ok(vec![Token::ArrayCreate])),
+            ("42".to_string(), Ok(vec![Token::Int("42".to_string())])),
+            ("4.2".to_string(), Ok(vec![Token::Float("4.2".to_string())])),
+            ("1e3".to_string(), Ok(vec![Token::Float("1e3".to_string())])),
+            ("1.5e-3".to_string(), Ok(vec![Token::Float("1.5e-3".to_string())])),
+            ("1.5e+3".to_string(), Ok(vec![Token::Float("1.5e+3".to_string())])),
+            ("(".to_string(), Ok(vec![Token::LParen])),
+            (")".to_string(), Ok(vec![Token::RParen])),
+            ("-".to_string(), Ok(vec![Token::Minus])),
+            ("-.".to_string(), Ok(vec![Token::MinusDot])),
+            ("+".to_string(), Ok(vec![Token::Plus])),
+            ("+.".to_string(), Ok(vec![Token::PlusDot])),
+            ("*.".to_string(), Ok(vec![Token::AstDot])),
+            ("/.".to_string(), Ok(vec![Token::SlashDot])),
+            ("<".to_string(), Ok(vec![Token::Less])),
+            ("<>".to_string(), Ok(vec![Token::LessGreater])),
+            ("<=".to_string(), Ok(vec![Token::LessEqual])),
+            ("<-".to_string(), Ok(vec![Token::LessMinus])),
+            ("=".to_string(), Ok(vec![Token::Equal])),
+            (">".to_string(), Ok(vec![Token::Greater])),
+            (">=".to_string(), Ok(vec![Token::GreaterEqual])),
+            (",".to_string(), Ok(vec![Token::Comma])),
+            (".".to_string(), Ok(vec![Token::Dot])),
+            (";".to_string(), Ok(vec![Token::Semicolon])),
+            ("not".to_string(), Ok(vec![Token::Not])),
+            ("true".to_string(), Ok(vec![Token::Bool(true)])),
+            ("false".to_string(), Ok(vec![Token::Bool(false)])),
+            ("if".to_string(), Ok(vec![Token::If])),
+            ("then".to_string(), Ok(vec![Token::Then])),
+            ("else".to_string(), Ok(vec![Token::Else])),
+            ("let".to_string(), Ok(vec![Token::Let])),
+            ("in".to_string(), Ok(vec![Token::In])),
+            ("rec".to_string(), Ok(vec![Token::Rec])),
+        ];
+        for (input, expected) in cases.iter() {
+            let actual = tokenize(input);
+            assert_eq!(actual, *expected);
+        }
+    }
+}

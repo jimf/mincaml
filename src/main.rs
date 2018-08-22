@@ -1,3 +1,4 @@
+pub mod id;
 pub mod lexer;
 pub mod parser;
 pub mod syntax;
